@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Present Hangman - Splai Premier League</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for a friendly, playful kids comic aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #f0fdf4; /* Light green grass hue */
+        }
+        .football-grass {
+            background-image: repeating-linear-gradient(
+                90deg,
+                #15803d 0px,
+                #15803d 40px,
+                #166534 40px,
+                #166534 80px
+            );
+        }
+        /* Custom bouncy animation for goals */
+        @keyframes goalBounce {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.3) rotate(5deg); }
+        }
+        .animate-goal {
+            animation: goalBounce 0.6s ease-in-out infinite;
+        }
+        /* Football spinning animation */
+        @keyframes spinBall {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .ball-spin {
+            animation: spinBall 1.5s linear infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden text-slate-800 selection:bg-orange-200">
+
+    <!-- TOP HEADER BAR -->
+    <header class="bg-slate-900 text-white py-3 px-4 shadow-md flex justify-between items-center z-10">
+        <div class="flex items-center space-x-2">
+            <!-- Tiny SVG Logo representing the Splai Fox -->
+            <div class="w-10 h-10 bg-white rounded-full p-0.5 flex items-center justify-center shadow-inner">
+                <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <!-- Graduation Cap -->
+                    <polygon points="50,10 85,25 50,40 15,25" fill="#0B2341" />
+                    <rect x="44" y="28" width="12" height="15" fill="#0B2341" />
+                    <line x1="85" y1="25" x2="85" y2="45" stroke="#0B2341" stroke-width="2" />
+                    <circle cx="85" cy="45" r="3" fill="#0B2341" />
+                    <!-- Fox Face Outline -->
+                    <polygon points="50,45 80,60 70,80 50,95 30,80 20,60" fill="#E05A16" />
+                    <polygon points="50,45 50,95 20,60" fill="#D04D0E" /> <!-- Shadow side -->
+                    <!-- White Cheeks -->
+                    <polygon points="30,80 20,60 35,70" fill="#FFFFFF" />
+                    <polygon points="70,80 80,60 65,70" fill="#FFFFFF" />
+                    <!-- Glasses -->
+                    <rect x="28" y="55" width="20" height="12" rx="3" fill="none" stroke="#1E293B" stroke-width="4" />
+                    <rect x="52" y="55" width="20" height="12" rx="3" fill="none" stroke="#1E293B" stroke-width="4" />
+                    <line x1="48" y1="61" x2="52" y2="61" stroke="#1E293B" stroke-width="4" />
+                </svg>
+            </div>
+            <div>
+                <span class="text-orange-500 font-bold tracking-wider text-sm block md:inline">SPLAI</span>
+                <span class="text-blue-400 font-medium text-xs md:text-sm">PREMIER LEAGUE</span>
+            </div>
+        </div>
+        <div class="text-center hidden md:block">
+            <span class="bg-orange-500 text-white text-xs px-3 py-1 rounded-full font-semibold uppercase tracking-wider">Simple Present Hangman</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleMute()" id="muteBtn" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-full transition-all text-orange-400">
+                <!-- Sound On Icon -->
+                <svg id="soundOnIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.09-3.09a1 1 0 01.707-.234zM11 10a3 3 0 00-3-3m3 6a3 3 0 001.5-2.588M16.243 5.757a1 1 0 111.414 1.414A6.979 6.979 0 0015 10c0 1.933-.784 3.683-2.057 4.95a1 1 0 11-1.414-1.414A4.98 4.98 0 0113 10c0-1.38-.56-2.63-1.464-3.536a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                <!-- Sound Off Icon (hidden initially) -->
+                <svg id="soundOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.09-3.09a1 1 0 01.707-.234zM12 8a1 1 0 10-2 0v4a1 1 0 102 0V8z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN APP WRAPPER -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4 relative z-0">
+        
+        <!-- ================= START PAGE ================= -->
+        <section id="startPage" class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6 md:p-8 border-4 border-slate-900 relative overflow-hidden flex flex-col items-center text-center">
+            
+            <!-- Top SPLAI Premier League Detailed SVG Logo -->
+            <div class="w-48 h-48 md:w-56 md:h-56 mb-4 animate-bounce duration-1000">
+                <svg viewBox="0 0 400 500" class="w-full h-full">
+                    <!-- Academic Graduation Cap -->
+                    <polygon points="200,30 360,90 200,150 40,90" fill="#0E223D" stroke="#ffffff" stroke-width="3"/>
+                    <rect x="175" y="110" width="50" height="40" fill="#0E223D"/>
+                    <line x1="360" y1="90" x2="360" y2="200" stroke="#0E223D" stroke-width="6"/>
+                    <path d="M 350,200 C 350,220 370,220 370,200 Z" fill="#0E223D"/>
+                    <circle cx="360" cy="210" r="10" fill="#E05A16" />
+                    
+                    <!-- Ears with UK Flag style highlights -->
+                    <polygon points="100,160 50,240 120,240" fill="#0E223D"/>
+                    <polygon points="80,180 60,230 110,230" fill="#E11D48"/> <!-- Red stripe ear inside -->
+                    
+                    <polygon points="300,160 350,240 280,240" fill="#0E223D"/>
+                    <polygon points="320,180 340,230 290,230" fill="#E11D48"/> <!-- Red stripe ear inside -->
+
+                    <!-- Fox Main Head (Orange) -->
+                    <polygon points="200,150 340,240 310,340 200,430 90,340 60,240" fill="#EA580C"/>
+                    
+                    <!-- White Cheek Fluffs -->
+                    <polygon points="90,340 60,240 120,290" fill="#FFFFFF"/>
+                    <polygon points="310,340 340,240 280,290" fill="#FFFFFF"/>
+                    <polygon points="90,340 130,380 200,430 110,410" fill="#FFFFFF"/>
+                    <polygon points="310,340 270,380 200,430 290,410" fill="#FFFFFF"/>
+
+                    <!-- Union Jack inspired Forehead Decor -->
+                    <polygon points="200,150 220,240 180,240" fill="#0E223D" />
+                    <line x1="200" y1="150" x2="200" y2="240" stroke="#E11D48" stroke-width="8" />
+                    
+                    <!-- Smart Geeky Black Glasses -->
+                    <rect x="80" y="240" width="105" height="75" rx="20" fill="none" stroke="#1E293B" stroke-width="16" />
+                    <rect x="215" y="240" width="105" height="75" rx="20" fill="none" stroke="#1E293B" stroke-width="16" />
+                    <line x1="185" y1="275" x2="215" y2="275" stroke="#1E293B" stroke-width="16" />
+                    
+                    <!-- Fox Eyes inside glasses -->
+                    <circle cx="132" cy="277" r="16" fill="#FFFFFF"/>
+                    <circle cx="132" cy="277" r="8" fill="#111827"/>
+                    <circle cx="128" cy="273" r="3" fill="#FFFFFF"/>
+
+                    <circle cx="268" cy="277" r="16" fill="#FFFFFF"/>
+                    <circle cx="268" cy="277" r="8" fill="#111827"/>
+                    <circle cx="264" cy="273" r="3" fill="#FFFFFF"/>
+
+                    <!-- Nose & Snout -->
+                    <polygon points="200,320 170,380 230,380" fill="#FDBA74"/>
+                    <ellipse cx="200" cy="380" rx="18" ry="12" fill="#111827" />
+
+                    <!-- Book at the bottom -->
+                    <path d="M 100,420 Q 200,390 300,420 L 320,470 Q 200,440 80,470 Z" fill="#0E223D" stroke="#FFFFFF" stroke-width="3" />
+                    <path d="M 100,420 Q 200,390 200,460 L 200,460" stroke="#FFFFFF" stroke-width="4" />
+                    <line x1="120" y1="440" x2="180" y2="430" stroke="#94A3B8" stroke-width="3" />
+                    <line x1="120" y1="450" x2="180" y2="440" stroke="#94A3B8" stroke-width="3" />
+                    <line x1="220" y1="430" x2="280" y2="440" stroke="#94A3B8" stroke-width="3" />
+                    <line x1="220" y1="440" x2="280" y2="450" stroke="#94A3B8" stroke-width="3" />
+                </svg>
+            </div>
+
+            <!-- Titles -->
+            <div class="space-y-1 mb-6">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-none uppercase">
+                    Simple Present <span class="text-orange-500 block md:inline">Hangman</span>
+                </h1>
+                <p class="text-slate-500 text-lg font-medium">Splai Premier League Edition</p>
+            </div>
+
+            <!-- Description -->
+            <div class="bg-orange-50 rounded-2xl p-4 mb-6 border-2 border-dashed border-orange-300 max-w-md">
+                <p class="text-slate-700 font-medium text-sm md:text-base leading-relaxed">
+                    Score goals by guessing the correct letters to complete the sentence! Use <span class="text-orange-600 font-bold">like, likes, love,</span> or <span class="text-orange-600 font-bold">loves</span> and learn about delicious foods! 🍓🍕🧀
+                </p>
+            </div>
+
+            <!-- Start Button -->
+            <button onclick="goToTeamSelection()" class="w-full max-w-xs bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1 active:translate-y-0 border-b-4 border-orange-700">
+                CHOOSE YOUR TEAM! ⚽
+            </button>
+
+            <!-- Creators Credit -->
+            <footer class="mt-8 text-xs text-slate-400 border-t pt-4 w-full flex flex-col sm:flex-row justify-between items-center gap-2">
+                <span>Created by: <strong class="text-slate-600">Èlia Martínez & Amanda Cano</strong></span>
+                <span>Year 3 ESL Grammar Quest 🎓</span>
+            </footer>
+        </section>
+
+
+        <!-- ================= TEAM SELECTION PAGE ================= -->
+        <section id="teamPage" class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-6 md:p-8 border-4 border-slate-900 hidden">
+            <h2 class="text-3xl font-extrabold text-center text-slate-900 mb-2">CHOOSE YOUR PREMIER LEAGUE TEAM</h2>
+            <p class="text-center text-slate-500 mb-6 font-medium">Select a team to customize your striker's kit colors!</p>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8" id="teamsGrid">
+                <!-- Javascript will inject Premier League teams here -->
+            </div>
+
+            <div class="flex justify-between items-center">
+                <button onclick="goToStartPage()" class="text-slate-500 hover:text-slate-800 font-bold flex items-center gap-1 transition-colors">
+                    ← Back
+                </button>
+                <button id="startGameBtn" onclick="startGame()" disabled class="bg-slate-300 text-slate-500 font-bold py-3 px-8 rounded-2xl cursor-not-allowed transition-all">
+                    START THE MATCH! 🏟️
+                </button>
+            </div>
+        </section>
+
+
+        <!-- ================= GAMEPLAY PLAYGROUND ================= -->
+        <section id="gamePage" class="w-full max-w-5xl bg-white rounded-3xl shadow-2xl border-4 border-slate-900 overflow-hidden hidden flex flex-col md:flex-row">
+            
+            <!-- LEFT PANEL: Interactive Football Pitch (The hangman visualization) -->
+            <div class="w-full md:w-1/2 football-grass p-4 relative min-h-[280px] md:min-h-[450px] flex flex-col justify-between border-b-4 md:border-b-0 md:border-r-4 border-slate-900">
+                
+                <!-- Scoreboard HUD -->
+                <div class="flex justify-between items-center bg-slate-900/80 backdrop-blur-sm rounded-xl p-3 text-white border-2 border-slate-700 shadow-md">
+                    <div class="flex items-center gap-2">
+                        <!-- Tiny chosen team badge -->
+                        <span id="hudBadge" class="w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-md font-bold text-white"></span>
+                        <div>
+                            <span id="hudTeamName" class="text-xs font-semibold block uppercase tracking-wider text-orange-400">Team</span>
+                            <span class="text-sm font-bold text-white block">Level <span id="currentLevelText">1</span>/15</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Goal counter -->
+                    <div class="text-center bg-slate-800 px-3 py-1 rounded-lg border border-slate-700">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">Goals</span>
+                        <span id="scoreText" class="text-xl font-extrabold text-emerald-400">0</span>
+                    </div>
+
+                    <!-- Lives represented by Red Cards / Red Balls -->
+                    <div class="text-right">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold block mb-0.5">LIVES LEFT</span>
+                        <div class="flex gap-1 justify-end" id="livesContainer">
+                            <!-- Injected by JS: 5 red cards/balls -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Football Goal & Interactive Animations Canvas -->
+                <div class="relative flex-grow flex items-center justify-center py-6">
+                    
+                    <!-- Goalpost graphics -->
+                    <div class="absolute bottom-6 w-64 h-36 border-t-8 border-x-8 border-white rounded-t-lg bg-emerald-500/20 flex items-center justify-center overflow-hidden">
+                        <!-- Goal Net Mesh Overlay -->
+                        <div class="w-full h-full" style="background-image: radial-gradient(circle, transparent 20%, #ffffff30 20%, #ffffff30 21%, transparent 21%), radial-gradient(circle, transparent 20%, #ffffff30 20%, #ffffff30 21%, transparent 21%); background-size: 15px 15px; background-position: 0 0, 7.5px 7.5px;"></div>
+                        
+                        <!-- Goal Sign / Celebration Banner -->
+                        <div id="goalSign" class="absolute inset-0 bg-yellow-400/90 text-slate-950 font-black text-4xl flex items-center justify-center animate-goal transform scale-0 transition-transform duration-300 z-10 border-4 border-black shadow-2xl">
+                            ⚽ GOAL!!! ⚽
+                        </div>
+                        <div id="saveSign" class="absolute inset-0 bg-rose-600/90 text-white font-black text-4xl flex items-center justify-center transform scale-0 transition-transform duration-300 z-10 border-4 border-white shadow-2xl">
+                            🧤 SAVED! 🧤
+                        </div>
+                    </div>
+
+                    <!-- Characters Container -->
+                    <div class="w-full max-w-sm h-48 relative flex justify-between items-end px-4">
+                        
+                        <!-- Striker Character (Left) -->
+                        <div id="strikerChar" class="w-16 h-28 flex flex-col items-center justify-end transition-all duration-500 transform relative z-10">
+                            <!-- Team Shirt Color indicator -->
+                            <div class="relative w-12 h-14 bg-blue-600 rounded-t-xl flex flex-col items-center justify-center text-white border-2 border-slate-900 shadow-md" id="jerseyBody">
+                                <!-- Stripe / Secondary Color pattern -->
+                                <div class="absolute top-0 bottom-0 left-1/3 right-1/3 bg-white" id="jerseyPattern"></div>
+                                <span class="text-xs font-bold z-10 bg-slate-900/40 px-1 rounded">3</span>
+                            </div>
+                            <div class="w-10 h-6 bg-amber-100 border-x-2 border-b-2 border-slate-900 rounded-b-lg"></div>
+                            <!-- Legs & boots -->
+                            <div class="flex justify-between w-8 px-1">
+                                <div class="w-2.5 h-6 bg-slate-950 rounded-b"></div>
+                                <div class="w-2.5 h-6 bg-slate-950 rounded-b"></div>
+                            </div>
+                            <!-- Player Head -->
+                            <div class="absolute -top-6 w-10 h-10 bg-amber-100 border-2 border-slate-900 rounded-full flex items-center justify-center font-bold text-slate-900 text-[10px] shadow-sm">
+                                🧑‍🚀
+                            </div>
+                        </div>
+
+                        <!-- Football (Middle) -->
+                        <div id="soccerBall" class="w-10 h-10 bg-white rounded-full border-2 border-slate-900 shadow-lg flex items-center justify-center text-lg transition-all duration-500 absolute bottom-1 left-20 z-20">
+                            ⚽
+                        </div>
+
+                        <!-- Goalkeeper (Right) -->
+                        <div id="keeperChar" class="w-16 h-28 flex flex-col items-center justify-end transition-all duration-500 transform relative z-10">
+                            <!-- Keeper Jersey (Bright yellow/green) -->
+                            <div class="w-12 h-14 bg-yellow-400 rounded-t-xl flex flex-col items-center justify-center border-2 border-slate-900 shadow-md">
+                                <div class="w-3 h-3 bg-black rounded-full mb-1"></div>
+                                <span class="text-[10px] font-bold text-slate-900">GK</span>
+                            </div>
+                            <!-- Keeper gloves extenders -->
+                            <div class="absolute left-[-10px] top-6 w-6 h-6 bg-emerald-500 border-2 border-slate-900 rounded-full flex items-center justify-center font-bold text-xs">🧤</div>
+                            <div class="absolute right-[-10px] top-6 w-6 h-6 bg-emerald-500 border-2 border-slate-900 rounded-full flex items-center justify-center font-bold text-xs">🧤</div>
+                            
+                            <div class="w-10 h-6 bg-slate-800 border-x-2 border-b-2 border-slate-900 rounded-b-lg"></div>
+                            <div class="flex justify-between w-8 px-1">
+                                <div class="w-2.5 h-6 bg-black rounded-b"></div>
+                                <div class="w-2.5 h-6 bg-black rounded-b"></div>
+                            </div>
+                            <!-- Keeper Head -->
+                            <div class="absolute -top-6 w-10 h-10 bg-amber-200 border-2 border-slate-900 rounded-full flex items-center justify-center font-bold text-xs">
+                                🦁
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Splai Premier League mini branding on pitch -->
+                <div class="text-center text-white/40 text-xs font-semibold tracking-wider uppercase select-none pointer-events-none mb-1">
+                    ⚽ SPLAI PREMIER PENALTY SHOOTOUT ⚽
+                </div>
+
+            </div>
+
+            <!-- RIGHT PANEL: Grammar Task, Word Blanks & Keyboard -->
+            <div class="w-full md:w-1/2 p-6 flex flex-col justify-between bg-slate-50">
+                
+                <!-- Level grammar sentence -->
+                <div class="space-y-4 mb-6">
+                    <span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block">
+                        Fill in the Missing Word
+                    </span>
+                    <h3 id="sentencePrompt" class="text-xl md:text-2xl font-extrabold text-slate-900 leading-snug">
+                        <!-- e.g. "He _____ yoghurt." -->
+                    </h3>
+                    
+                    <!-- Easy clue / Emoji hints helper -->
+                    <div id="clueBox" class="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-xl flex items-center gap-2 text-sm">
+                        <span class="text-xl">💡</span>
+                        <p id="clueText" class="font-medium"></p>
+                    </div>
+                </div>
+
+                <!-- Word blanks rendered as spinning soccer balls! -->
+                <div class="flex flex-wrap gap-2 justify-center py-6 border-y-2 border-dashed border-slate-200 my-4 min-h-[90px]" id="hangmanWordContainer">
+                    <!-- Injected by JS, each hidden letter as ⚽ -->
+                </div>
+
+                <!-- Standard Keyboard of Letters -->
+                <div class="space-y-4">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest block text-center">Tap a Letter to Kick the Ball</span>
+                    <div class="grid grid-cols-7 gap-1.5 md:gap-2" id="keyboardContainer">
+                        <!-- Generated letters A-Z -->
+                    </div>
+                </div>
+
+                <!-- Back to menu option -->
+                <div class="mt-6 flex justify-between items-center text-xs text-slate-400">
+                    <span>Press letters on physical keyboard too!</span>
+                    <button onclick="goToStartPage()" class="hover:text-slate-800 font-bold transition-all underline">Quit Match</button>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ================= FINAL CERTIFICATE / SUMMARY PAGE ================= -->
+        <section id="resultPage" class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-8 border-8 border-double border-slate-900 hidden flex flex-col items-center relative overflow-hidden">
+            
+            <!-- Confetti SVG Background effects -->
+            <div class="absolute inset-0 pointer-events-none opacity-25" style="background-image: radial-gradient(#ea580c 20%, transparent 20%), radial-gradient(#0e223d 20%, transparent 20%); background-size: 40px 40px; background-position: 0 0, 20px 20px;"></div>
+
+            <!-- Header Badge -->
+            <div class="w-36 h-36 mb-4">
+                <svg viewBox="0 0 400 500" class="w-full h-full">
+                    <!-- Graduation Cap -->
+                    <polygon points="200,30 360,90 200,150 40,90" fill="#0E223D" stroke="#ffffff" stroke-width="3"/>
+                    <rect x="175" y="110" width="50" height="40" fill="#0E223D"/>
+                    <line x1="360" y1="90" x2="360" y2="200" stroke="#0E223D" stroke-width="6"/>
+                    <circle cx="360" cy="210" r="10" fill="#E05A16" />
+                    <!-- Fox Main Head (Orange) -->
+                    <polygon points="200,150 340,240 310,340 200,430 90,340 60,240" fill="#EA580C"/>
+                    <polygon points="90,340 60,240 120,290" fill="#FFFFFF"/>
+                    <polygon points="310,340 340,240 280,290" fill="#FFFFFF"/>
+                    <!-- Smart Geeky Black Glasses -->
+                    <rect x="80" y="240" width="105" height="75" rx="20" fill="none" stroke="#1E293B" stroke-width="16" />
+                    <rect x="215" y="240" width="105" height="75" rx="20" fill="none" stroke="#1E293B" stroke-width="16" />
+                    <line x1="185" y1="275" x2="215" y2="275" stroke="#1E293B" stroke-width="16" />
+                    <circle cx="132" cy="277" r="16" fill="#FFFFFF"/>
+                    <circle cx="132" cy="277" r="8" fill="#111827"/>
+                    <circle cx="268" cy="277" r="16" fill="#FFFFFF"/>
+                    <circle cx="268" cy="277" r="8" fill="#111827"/>
+                    <!-- Nose -->
+                    <ellipse cx="200" cy="380" rx="18" ry="12" fill="#111827" />
+                </svg>
+            </div>
+
+            <!-- Splai Title -->
+            <div class="text-center space-y-1 mb-6">
+                <h2 class="text-lg font-bold text-orange-600 tracking-wider uppercase">SPLAI PREMIER LEAGUE</h2>
+                <h3 class="text-3xl font-extrabold text-slate-900 uppercase">🏆 English Match Certificate 🏆</h3>
+            </div>
+
+            <!-- Certificate Body -->
+            <div class="w-full border-4 border-dashed border-orange-400 rounded-2xl p-6 text-center bg-orange-50/50 mb-6 space-y-4">
+                <p class="text-slate-500 text-sm uppercase tracking-widest font-semibold">This is proudly awarded to the striker representing</p>
+                <div class="flex items-center justify-center gap-3">
+                    <span id="certTeamBadge" class="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-md font-bold text-white"></span>
+                    <h4 id="certTeamName" class="text-2xl font-black text-slate-900 tracking-tight uppercase">THE CHAMPIONS</h4>
+                </div>
+                
+                <p class="text-slate-700 font-medium text-lg leading-relaxed max-w-md mx-auto">
+                    For successfully passing the simple present grammar challenge with an amazing score of:
+                </p>
+
+                <div class="inline-block bg-slate-900 text-emerald-400 px-8 py-3 rounded-2xl border-4 border-emerald-400 shadow-xl">
+                    <span class="text-[10px] text-slate-400 uppercase font-black block tracking-widest">FINAL GOALS SCORED</span>
+                    <span id="finalScoreText" class="text-4xl font-black">15 / 15</span>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center max-w-sm mx-auto">
+                    <div class="text-left">
+                        <span class="block text-slate-400">Class Instructors:</span>
+                        <strong class="text-slate-700">Èlia Martínez & Amanda Cano</strong>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-slate-400">Status:</span>
+                        <span class="font-bold text-emerald-600">🇬🇧 SPLAI PRO STRIKER</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                <button onclick="restartGame()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-8 rounded-2xl shadow-md transition-all">
+                    PLAY AGAIN 🔄
+                </button>
+                <button onclick="printCertificate()" class="bg-slate-950 hover:bg-slate-800 text-white font-bold py-3.5 px-8 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    PRINT CERTIFICATE
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER WITH SPLAI COMPLIANCE -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center border-t border-slate-800 shrink-0">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span>© 2026 Splai Premier League. Made with ❤️ for Year 3 English Learners.</span>
+            <span>Creators: <strong>Èlia Martínez & Amanda Cano</strong></span>
+        </div>
+    </footer>
+
+
+    <!-- ================= GAME LOGIC & ENGINE ================= -->
+    <script>
+        // Sound state variables
+        let isMuted = false;
+        let audioCtx = null;
+
+        // Custom Web Audio Synth engine to avoid needing external audio files
+        function playSynthSound(type) {
+            if (isMuted) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'kick') {
+                    // Short heavy kick thump
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+                    gain.gain.setValueAtTime(0.5, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } 
+                else if (type === 'goal') {
+                    // Exciting crowd cheering and referee whistle combo
+                    // Whistle first
+                    const whistleOsc = audioCtx.createOscillator();
+                    const whistleGain = audioCtx.createGain();
+                    whistleOsc.type = 'triangle';
+                    whistleOsc.connect(whistleGain);
+                    whistleGain.connect(audioCtx.destination);
+                    whistleOsc.frequency.setValueAtTime(1000, now);
+                    whistleOsc.frequency.setValueAtTime(1200, now + 0.05);
+                    whistleOsc.frequency.setValueAtTime(1000, now + 0.1);
+                    whistleGain.gain.setValueAtTime(0.2, now);
+                    whistleGain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    whistleOsc.start(now);
+                    whistleOsc.stop(now + 0.25);
+
+                    // Happy chords for the goal celebration!
+                    const notes = [261.63, 329.63, 392.00, 523.25]; // C major chord arpeggio
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.frequency.setValueAtTime(freq, now + (idx * 0.08));
+                        gain.gain.setValueAtTime(0.2, now + (idx * 0.08));
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                        osc.start(now + (idx * 0.08));
+                        osc.stop(now + 0.6);
+                    });
+                } 
+                else if (type === 'save') {
+                    // Sad downward sliding tone + referee double whistle blow
+                    const osc1 = audioCtx.createOscillator();
+                    const gain1 = audioCtx.createGain();
+                    osc1.type = 'sine';
+                    osc1.connect(gain1);
+                    gain1.connect(audioCtx.destination);
+                    osc1.frequency.setValueAtTime(400, now);
+                    osc1.frequency.linearRampToValueAtTime(150, now + 0.4);
+                    gain1.gain.setValueAtTime(0.3, now);
+                    gain1.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                    osc1.start(now);
+                    osc1.stop(now + 0.4);
+
+                    // Referee double tweet
+                    [now + 0.1, now + 0.25].forEach((start) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.frequency.setValueAtTime(1500, start);
+                        osc.frequency.exponentialRampToValueAtTime(800, start + 0.1);
+                        gain.gain.setValueAtTime(0.2, start);
+                        gain.gain.linearRampToValueAtTime(0.01, start + 0.1);
+                        osc.start(start);
+                        osc.stop(start + 0.1);
+                    });
+                }
+                else if (type === 'levelUp') {
+                    // Success flourish
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // Bright high C chord
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.frequency.setValueAtTime(freq, now + (idx * 0.06));
+                        gain.gain.setValueAtTime(0.15, now + (idx * 0.06));
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                        osc.start(now + (idx * 0.06));
+                        osc.stop(now + 0.4);
+                    });
+                }
+                else if (type === 'defeat') {
+                    // Sad game over progression
+                    const notes = [392.00, 349.23, 311.13, 261.63]; // Descending sad minor chord
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.frequency.setValueAtTime(freq, now + (idx * 0.15));
+                        gain.gain.setValueAtTime(0.2, now + (idx * 0.15));
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+                        osc.start(now + (idx * 0.15));
+                        osc.stop(now + 0.8);
+                    });
+                }
+            } catch (err) {
+                console.warn("Audio synthesis error: ", err);
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('soundOnIcon').classList.toggle('hidden', isMuted);
+            document.getElementById('soundOffIcon').classList.toggle('hidden', !isMuted);
+        }
+
+        // --- PREMIER LEAGUE TEAMS CONFIG ---
+        const teams = [
+            { id: 'arsenal', name: 'Arsenal', bg: 'bg-red-600', text: 'text-white', badge: '🔴', accent: 'bg-white', stroke: 'border-red-800' },
+            { id: 'chelsea', name: 'Chelsea', bg: 'bg-blue-800', text: 'text-white', badge: '🔵', accent: 'bg-yellow-400', stroke: 'border-blue-900' },
+            { id: 'liverpool', name: 'Liverpool', bg: 'bg-red-800', text: 'text-yellow-400', badge: '👹', accent: 'bg-red-600', stroke: 'border-red-950' },
+            { id: 'man_city', name: 'Man City', bg: 'bg-sky-400', text: 'text-slate-900', badge: '🦅', accent: 'bg-white', stroke: 'border-sky-600' },
+            { id: 'man_utd', name: 'Man United', bg: 'bg-red-600', text: 'text-yellow-300', badge: '😈', accent: 'bg-black', stroke: 'border-red-700' },
+            { id: 'spurs', name: 'Tottenham', bg: 'bg-slate-100', text: 'text-indigo-950', badge: '🐓', accent: 'bg-indigo-950', stroke: 'border-slate-300' },
+            { id: 'leicester', name: 'Leicester', bg: 'bg-blue-600', text: 'text-white', badge: '🦊', accent: 'bg-white', stroke: 'border-blue-700' },
+            { id: 'aston_villa', name: 'Aston Villa', bg: 'bg-amber-800', text: 'text-cyan-300', badge: '🦁', accent: 'bg-cyan-500', stroke: 'border-amber-950' }
+        ];
+
+        let selectedTeam = null;
+
+        // --- GRAMMAR QUEST LEVELS CONFIG ---
+        // A structured mix of Simple Present like/likes/love/loves, plus target food vocabulary.
+        // Some levels have the verb missing, some have the food missing, ensuring comprehensive Year 3 revision!
+        const levels = [
+            {
+                id: 1,
+                sentence: "She ______ strawberries. 🍓",
+                clue: "Simple Present: Singular person (She) + 'love'",
+                answer: "LOVES"
+            },
+            {
+                id: 2,
+                sentence: "We ______ peas! 🟢",
+                clue: "Simple Present: Plural person (We) + 'like'",
+                answer: "LIKE"
+            },
+            {
+                id: 3,
+                sentence: "He ______ cold yoghurt. 🥛",
+                clue: "Simple Present: Singular person (He) + 'like'",
+                answer: "LIKES"
+            },
+            {
+                id: 4,
+                sentence: "They ______ chocolate! 🍫",
+                clue: "Simple Present: Plural person (They) + 'love'",
+                answer: "LOVE"
+            },
+            {
+                id: 5,
+                sentence: "I ______ eating salad. 🥗",
+                clue: "Simple Present: First person (I) + 'like'",
+                answer: "LIKE"
+            },
+            {
+                id: 6,
+                sentence: "My sister loves sweet red ______! 🍓",
+                clue: "Food word: Red, sweet berries growing in fields",
+                answer: "STRAWBERRIES"
+            },
+            {
+                id: 7,
+                sentence: "Amanda likes ______ in the morning. 🥣",
+                clue: "Food word: A breakfast food eaten with milk in a bowl",
+                answer: "CEREAL"
+            },
+            {
+                id: 8,
+                sentence: "Èlia and Amanda ______ biscuits. 🍪",
+                clue: "Simple Present: Two people (They) + 'love'",
+                answer: "LOVE"
+            },
+            {
+                id: 9,
+                sentence: "They like drinking pure ______ when thirsty. 💧",
+                clue: "Food/Drink word: Transparent, healthy liquid from the tap",
+                answer: "WATER"
+            },
+            {
+                id: 10,
+                sentence: "He ______ crunchy crisps! 🥔",
+                clue: "Simple Present: Singular person (He) + 'love'",
+                answer: "LOVES"
+            },
+            {
+                id: 11,
+                sentence: "She loves drinking fresh white ______! 🥛",
+                clue: "Food/Drink word: A white liquid that comes from cows",
+                answer: "MILK"
+            },
+            {
+                id: 12,
+                sentence: "My dog ______ sausages! 🌭",
+                clue: "Simple Present: Singular animal (It) + 'likes'",
+                answer: "LIKES"
+            },
+            {
+                id: 13,
+                sentence: "We love eating hot ______! 🥔",
+                clue: "Food word: Round vegetables we use to make chips and crisps",
+                answer: "POTATOES"
+            },
+            {
+                id: 14,
+                sentence: "I love making a cheese ______ for lunch! 🥪",
+                clue: "Food word: Two pieces of bread with filling inside",
+                answer: "SANDWICH"
+            },
+            {
+                id: 15,
+                sentence: "He likes red ______ on his pizza. 🍅",
+                clue: "Food word: Round, red, juicy vegetables used in salads and sauces",
+                answer: "TOMATOES"
+            }
+        ];
+
+        // --- GAMEPLAY STATE STATE MACHINE ---
+        let currentLevelIndex = 0;
+        let lives = 5;
+        let score = 0;
+        let guessedLetters = [];
+        let isAnimating = false;
+
+        // On Page Load
+        window.onload = function() {
+            renderTeams();
+        }
+
+        // --- NAVIGATION ROUTER ---
+        function goToStartPage() {
+            showSection('startPage');
+        }
+
+        function goToTeamSelection() {
+            showSection('teamPage');
+        }
+
+        function showSection(id) {
+            document.getElementById('startPage').classList.add('hidden');
+            document.getElementById('teamPage').classList.add('hidden');
+            document.getElementById('gamePage').classList.add('hidden');
+            document.getElementById('resultPage').classList.add('hidden');
+            
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        // --- TEAM SELECTION GRAPHICS ---
+        function renderTeams() {
+            const grid = document.getElementById('teamsGrid');
+            grid.innerHTML = '';
+            
+            teams.forEach(team => {
+                const btn = document.createElement('button');
+                btn.className = `p-4 rounded-2xl border-4 ${team.stroke} ${team.bg} ${team.text} font-bold text-lg flex flex-col items-center justify-between gap-3 shadow-md hover:shadow-xl transition-all duration-150 transform hover:-translate-y-1 active:translate-y-0 cursor-pointer relative`;
+                btn.id = `team-card-${team.id}`;
+                btn.onclick = () => selectTeam(team);
+                
+                btn.innerHTML = `
+                    <span class="text-4xl filter drop-shadow">${team.badge}</span>
+                    <span class="tracking-wide uppercase text-sm font-black">${team.name}</span>
+                    <div class="absolute -top-2 -right-2 bg-yellow-400 text-slate-900 border-2 border-slate-950 w-6 h-6 rounded-full flex items-center justify-center text-xs opacity-0 transition-opacity" id="check-${team.id}">✓</div>
+                `;
+                grid.appendChild(btn);
+            });
+        }
+
+        function selectTeam(team) {
+            // Deselect previous
+            if (selectedTeam) {
+                const prevCard = document.getElementById(`team-card-${selectedTeam.id}`);
+                const prevCheck = document.getElementById(`check-${selectedTeam.id}`);
+                if (prevCard) prevCard.classList.remove('ring-4', 'ring-offset-2', 'ring-orange-500');
+                if (prevCheck) prevCheck.classList.add('opacity-0');
+            }
+            
+            selectedTeam = team;
+            
+            // Select new
+            const nextCard = document.getElementById(`team-card-${team.id}`);
+            const nextCheck = document.getElementById(`check-${team.id}`);
+            if (nextCard) nextCard.classList.add('ring-4', 'ring-offset-2', 'ring-orange-500');
+            if (nextCheck) nextCheck.classList.remove('opacity-0');
+            
+            // Enable Game Start button
+            const startBtn = document.getElementById('startGameBtn');
+            startBtn.disabled = false;
+            startBtn.className = "bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer";
+
+            // Prime the synthesizer context
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // --- MATCH START ---
+        function startGame() {
+            if (!selectedTeam) return;
+            
+            currentLevelIndex = 0;
+            score = 0;
+            lives = 5;
+            
+            // Update HUD graphics with selected team values
+            document.getElementById('hudTeamName').innerText = selectedTeam.name;
+            const hudBadge = document.getElementById('hudBadge');
+            hudBadge.innerText = selectedTeam.badge;
+            hudBadge.className = `w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-md font-bold text-white ${selectedTeam.bg} ${selectedTeam.stroke} border-2`;
+            
+            // Customize Striker Outfit
+            const jerseyBody = document.getElementById('jerseyBody');
+            jerseyBody.className = `relative w-12 h-14 rounded-t-xl flex flex-col items-center justify-center text-white border-2 border-slate-900 shadow-md ${selectedTeam.bg}`;
+            
+            const jerseyPattern = document.getElementById('jerseyPattern');
+            if (selectedTeam.accent) {
+                jerseyPattern.className = `absolute top-0 bottom-0 left-1/3 right-1/3 ${selectedTeam.accent}`;
+            } else {
+                jerseyPattern.className = "hidden";
+            }
+            
+            showSection('gamePage');
+            loadLevel();
+        }
+
+        // --- LEVEL CONTROLLER ---
+        function loadLevel() {
+            isAnimating = false;
+            guessedLetters = [];
+            
+            const currentLevel = levels[currentLevelIndex];
+            
+            // Update HUD values
+            document.getElementById('currentLevelText').innerText = currentLevelIndex + 1;
+            document.getElementById('scoreText').innerText = score;
+            
+            // Draw hearts / footballs based on current lives
+            renderLives();
+            
+            // Setup Sentence
+            document.getElementById('sentencePrompt').innerHTML = currentLevel.sentence.replace("______", "<span class='underline decoration-orange-500 decoration-4 underline-offset-4 text-orange-600 font-extrabold px-1'>______</span>");
+            document.getElementById('clueText').innerText = currentLevel.clue;
+            
+            // Render blanks
+            renderHangmanBlanks();
+            
+            // Render Keyboard
+            renderKeyboard();
+            
+            // Reset animations to normal penalty spot
+            resetBallState();
+        }
+
+        function renderLives() {
+            const container = document.getElementById('livesContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const card = document.createElement('span');
+                if (i < lives) {
+                    // Active living status (Red Card)
+                    card.className = "w-5 h-7 bg-rose-600 border border-slate-950 rounded shadow transform hover:scale-110 transition-transform duration-100 block flex items-center justify-center text-[10px] font-bold text-white";
+                    card.innerText = "⚽";
+                } else {
+                    // Depleted life (Gray card)
+                    card.className = "w-5 h-7 bg-slate-700 border border-slate-900 rounded opacity-40 block flex items-center justify-center text-[10px] text-slate-500";
+                    card.innerText = "✗";
+                }
+                container.appendChild(card);
+            }
+        }
+
+        function renderHangmanBlanks() {
+            const container = document.getElementById('hangmanWordContainer');
+            container.innerHTML = '';
+            
+            const currentLevel = levels[currentLevelIndex];
+            const answer = currentLevel.answer;
+            
+            for (let i = 0; i < answer.length; i++) {
+                const letter = answer[i];
+                const block = document.createElement('div');
+                block.className = "w-12 h-12 flex items-center justify-center relative";
+                
+                if (guessedLetters.includes(letter)) {
+                    // Letter correctly guessed
+                    block.innerHTML = `
+                        <div class="w-10 h-10 bg-orange-500 text-white font-black text-xl flex items-center justify-center rounded-xl border-2 border-slate-900 shadow-md transform rotate-6 animate-pulse">
+                            ${letter}
+                        </div>
+                    `;
+                } else {
+                    // Hidden letter shown as soccer ball spinning slightly
+                    block.innerHTML = `
+                        <div class="w-10 h-10 bg-white border-2 border-slate-900 rounded-full flex items-center justify-center text-2xl shadow-md ball-spin hover:scale-110 transition-all select-none">
+                            ⚽
+                        </div>
+                    `;
+                }
+                container.appendChild(block);
+            }
+        }
+
+        function renderKeyboard() {
+            const container = document.getElementById('keyboardContainer');
+            container.innerHTML = '';
+            
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+            letters.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.className = "bg-white hover:bg-orange-100 active:bg-orange-200 border-2 border-slate-900 rounded-xl p-2.5 md:p-3 font-extrabold text-lg shadow-md transition-all active:translate-y-0.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed select-none";
+                btn.innerText = letter;
+                btn.id = `key-${letter}`;
+                
+                if (guessedLetters.includes(letter)) {
+                    btn.disabled = true;
+                }
+                
+                btn.onclick = () => handleGuess(letter);
+                container.appendChild(btn);
+            });
+        }
+
+        // Handle physical keyboard typing
+        document.addEventListener('keydown', (e) => {
+            const letter = e.key.toUpperCase();
+            if (/^[A-Z]$/.test(letter) && document.getElementById('gamePage') && !document.getElementById('gamePage').classList.contains('hidden') && !isAnimating) {
+                const btn = document.getElementById(`key-${letter}`);
+                if (btn && !btn.disabled) {
+                    handleGuess(letter);
+                }
+            }
+        });
+
+        // --- PENALTY SHOOTOUT ANIMATOR ---
+        function handleGuess(letter) {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            guessedLetters.push(letter);
+            
+            // Disable the corresponding keyboard key immediately
+            const keyBtn = document.getElementById(`key-${letter}`);
+            if (keyBtn) keyBtn.disabled = true;
+            
+            const currentLevel = levels[currentLevelIndex];
+            const isCorrect = currentLevel.answer.includes(letter);
+            
+            // Play kick audio
+            playSynthSound('kick');
+            
+            // Visual Animation Kick Sequence
+            const ball = document.getElementById('soccerBall');
+            const striker = document.getElementById('strikerChar');
+            const keeper = document.getElementById('keeperChar');
+            
+            // 1. Striker runs back and forward slightly to initiate kick
+            striker.style.transform = "translateX(15px) scaleX(-1)";
+            
+            setTimeout(() => {
+                striker.style.transform = "translateX(-10px) scaleX(1)";
+                
+                // 2. Ball flies into action
+                if (isCorrect) {
+                    // Ball flies into top left corner of the goal net
+                    ball.style.transform = "translate(55px, -110px) scale(0.6)";
+                    
+                    // Keeper dives the opposite direction (e.g., rightwards)
+                    keeper.style.transform = "translate(35px, -10px) rotate(45deg)";
+                    
+                    setTimeout(() => {
+                        // GOAL CELEBRATION!
+                        playSynthSound('goal');
+                        document.getElementById('goalSign').classList.remove('scale-0');
+                        document.getElementById('goalSign').classList.add('scale-100');
+                        
+                        setTimeout(() => {
+                            // Close goal celebrations and process logic
+                            document.getElementById('goalSign').classList.remove('scale-100');
+                            document.getElementById('goalSign').classList.add('scale-0');
+                            
+                            processCorrectGuess();
+                        }, 1200);
+                        
+                    }, 400);
+
+                } else {
+                    // Goalkeeper saves it! Ball goes to the right center.
+                    ball.style.transform = "translate(110px, -70px) scale(0.8)";
+                    
+                    // Keeper leaps beautifully to intercept the ball
+                    keeper.style.transform = "translate(-20px, -40px) rotate(-35deg)";
+                    
+                    setTimeout(() => {
+                        // SAVE BANNER!
+                        playSynthSound('save');
+                        document.getElementById('saveSign').classList.remove('scale-0');
+                        document.getElementById('saveSign').classList.add('scale-100');
+                        
+                        setTimeout(() => {
+                            // Close save alert
+                            document.getElementById('saveSign').classList.remove('scale-100');
+                            document.getElementById('saveSign').classList.add('scale-0');
+                            
+                            processIncorrectGuess();
+                        }, 1200);
+                        
+                    }, 400);
+                }
+
+            }, 200);
+        }
+
+        function resetBallState() {
+            const ball = document.getElementById('soccerBall');
+            const striker = document.getElementById('strikerChar');
+            const keeper = document.getElementById('keeperChar');
+            
+            ball.style.transform = "translate(0px, 0px) scale(1)";
+            striker.style.transform = "translate(0px, 0px) scaleX(1)";
+            keeper.style.transform = "translate(0px, 0px) rotate(0deg)";
+        }
+
+        // --- WIN / LOSS PROGRESSION LOGIC ---
+        function processCorrectGuess() {
+            renderHangmanBlanks();
+            
+            const currentLevel = levels[currentLevelIndex];
+            
+            // Check if entire word has been unmasked
+            const isWordCompleted = currentLevel.answer.split("").every(char => guessedLetters.includes(char));
+            
+            if (isWordCompleted) {
+                // Award points
+                score++;
+                playSynthSound('levelUp');
+                
+                // Advance or Win Game
+                setTimeout(() => {
+                    if (currentLevelIndex < levels.length - 1) {
+                        currentLevelIndex++;
+                        loadLevel();
+                    } else {
+                        endGame(true); // Complete success!
+                    }
+                }, 300);
+            } else {
+                // Let the kid guess again on same word
+                resetBallState();
+                isAnimating = false;
+            }
+        }
+
+        function processIncorrectGuess() {
+            lives--;
+            renderLives();
+            
+            if (lives <= 0) {
+                // No remaining lives, proceed to end-of-game summary
+                playSynthSound('defeat');
+                setTimeout(() => {
+                    endGame(false);
+                }, 300);
+            } else {
+                // Back to penalty spot for another try!
+                resetBallState();
+                isAnimating = false;
+            }
+        }
+
+        // --- END OF THE GAME AND CERTIFICATION ---
+        function endGame(isVictory) {
+            showSection('resultPage');
+            
+            // Update Certificate with team details
+            const certBadge = document.getElementById('certTeamBadge');
+            certBadge.innerText = selectedTeam.badge;
+            certBadge.className = `w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-md font-bold text-white ${selectedTeam.bg} ${selectedTeam.stroke} border-2`;
+            
+            document.getElementById('certTeamName').innerText = `${selectedTeam.name} STRIKER`;
+            document.getElementById('finalScoreText').innerText = `${score} / ${levels.length}`;
+        }
+
+        function restartGame() {
+            goToTeamSelection();
+        }
+
+        // Standard clean implementation of system print functionality for certification
+        function printCertificate() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
